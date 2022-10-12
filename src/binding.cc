@@ -13,38 +13,40 @@
 #include <ATen/Parallel.h>
 
 #ifdef WITH_CUDA
-#include <THC/THC.h>
+//#include <THC/THC.h>
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDAEvent.h>
 #endif
 
 
 #define CHECK_CONTIGUOUS(x)                                     \
-  AT_CHECK((x).is_contiguous(), #x " must be contiguous")
+  TORCH_CHECK((x).is_contiguous(), #x " must be contiguous")
 
 #define CHECK_CPU(x)                                            \
-  AT_CHECK((x).device().type() == c10::Device::Type::CPU,       \
+  TORCH_CHECK((x).device().type() == c10::Device::Type::CPU,       \
            #x " must be located in the CPU")
 
 #define CHECK_CPU_OR_CUDA(x)                                    \
-  AT_CHECK(((x).device().type() == c10::Device::Type::CPU ||    \
+  TORCH_CHECK(((x).device().type() == c10::Device::Type::CPU ||    \
             (x).device().type() == c10::Device::Type::CUDA),    \
            #x " must be located in the CPU or a CUDA device")
 
 #define CHECK_FLOAT(x)                                                  \
-  AT_CHECK((x).type().scalarType() == at::ScalarType::Float,            \
+  TORCH_CHECK((x).type().scalarType() == at::ScalarType::Float,            \
            #x " must be a Float tensor")
 
 #define CHECK_INT(x)                                                    \
-  AT_CHECK((x).type().scalarType() == at::ScalarType::Int,              \
+  TORCH_CHECK((x).type().scalarType() == at::ScalarType::Int,              \
            #x " must be a Int tensor")
 
 #define CHECK_NUM_DIM_IS_2_OR_3(x)              \
-  AT_CHECK((x).dim() == 2 || (x).dim() == 3,    \
+  TORCH_CHECK((x).dim() == 2 || (x).dim() == 3,    \
            #x " must have 2 or 3 dimensions")
 
 #define CHECK_SAME_NUM_ELEMENTS(t1, t2) do {                                 \
     const auto s1 = (t1).numel();                                            \
     const auto s2 = (t2).numel();                                            \
-    AT_CHECK(s1 == s2,                                                       \
+    TORCH_CHECK(s1 == s2,                                                       \
              "Number of elements of " #t1 " and " #t2 " must be equal "      \
              "(" + std::to_string(s1) + " vs. " + std::to_string(s2) + ")"); \
   } while(0)
@@ -52,7 +54,7 @@
 #define CHECK_WARP_CTC_CALL(s) do {                             \
     const ctcStatus_t status = (s);                             \
     const std::string status_str(ctcGetStatusString(status));   \
-    AT_CHECK(status == CTC_STATUS_SUCCESS,                      \
+    TORCH_CHECK(status == CTC_STATUS_SUCCESS,                      \
              "ctc_loss failed with status " + status_str);      \
   } while(0)
 
@@ -67,7 +69,6 @@ std::tuple<at::Tensor, at::Tensor> ctc_loss(
   CHECK_CONTIGUOUS(xs);
   CHECK_CONTIGUOUS(ys);
   // Check types
-  CHECK_FLOAT(x);
   CHECK_INT(y);
   CHECK_INT(xs);
   CHECK_INT(ys);
@@ -98,7 +99,8 @@ std::tuple<at::Tensor, at::Tensor> ctc_loss(
   } else if (x.device().type() == c10::Device::Type::CUDA) {
     ctc_opts.loc = CTC_GPU;
     ctc_opts.stream =
-        THCState_getCurrentStream(at::globalContext().getTHCState());
+        //THCState_getCurrentStream(at::globalContext().getTHCState());
+        at::cuda::getCurrentCUDAStream();
 #endif
   } else {
     AT_ERROR("ctc_loss not implemented for the given device type");

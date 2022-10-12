@@ -8,8 +8,8 @@ from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CppExtension, CUDAExtension
 
 extra_compile_args = {
-    "cxx": ["-std=c++11", "-O3", "-fopenmp"],
-    "nvcc": ["-std=c++11", "-O3", "--compiler-options=-fopenmp"],
+    "cxx": ["-std=c++14", "-O3", "-fopenmp"],
+    "nvcc": ["-std=c++14", "-O3", "--compiler-options=-fopenmp"],
 }
 
 CC = os.getenv("CC", None)
@@ -82,7 +82,7 @@ requirements = get_requirements()
 long_description = get_long_description()
 setup(
     name="torch-baidu-ctc",
-    version="0.3.0",
+    version="0.4.0-cuda11",
     description="PyTorch bindings for Baidu Warp-CTC",
     long_description=long_description,
     long_description_content_type="text/markdown",
